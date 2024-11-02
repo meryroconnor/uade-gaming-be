@@ -1,5 +1,7 @@
 const Game = require('../models/game');
 const { Op } = require('sequelize');
+const Comment = require('../models/comment');
+const Company = require('../models/company');
 
 exports.getCompanyGames = async (req, res) => {
   try {
@@ -182,6 +184,7 @@ exports.getGameById = async (req, res) => {
   try {
     const { id } = req.params;
 
+     // Consultar la base de datos para obtener los detalles del juego, incluyendo sus comentarios y la información de la empresa
     const game = await Game.findByPk(id, {
       include: [
         {
