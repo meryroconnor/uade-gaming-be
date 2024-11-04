@@ -5,13 +5,24 @@ const Company = require('../models/company');
 
 exports.getCompanyGames = async (req, res) => {
   try {
-    const companyId = req.user.companyId;
+    const companyId = req.user.companyId; // Se asume que `companyId` está disponible en el token del usuario autenticado
 
     const games = await Game.findAll({
       where: { companyId },
+      include: [
+        {
+          model: GameComment,
+          attributes: ['userId', 'content', 'rating']
+        },
+        {
+          model: Company,
+          attributes: ['id', 'name', 'logo', 'description']
+        }
+      ],
       attributes: [
-        'id', 'name', 'price', 'category', 'rating', 'description', 'imageUrl', 
-        'recommendedRequirements', 'minRequirements', 'os', 'players', 'language'
+        'id', 'name', 'price', 'category', 'rating', 'description', 'image', 
+        'recommendedRequirements', 'minRequirements', 'os', 'players', 
+        'language', 'isPublished'
       ]
     });
 
