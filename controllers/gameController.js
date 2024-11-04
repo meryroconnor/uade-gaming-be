@@ -9,7 +9,10 @@ exports.getCompanyGames = async (req, res) => {
 
     const games = await Game.findAll({
       where: { companyId },
-      attributes: ['id', 'name', 'price', 'category', 'isPublished', 'description', 'imageUrl']
+      attributes: [
+        'id', 'name', 'price', 'category', 'rating', 'description', 'imageUrl', 
+        'recommendedRequirements', 'minRequirements', 'os', 'players', 'language'
+      ]
     });
 
     res.status(200).json(games);
@@ -21,7 +24,7 @@ exports.getCompanyGames = async (req, res) => {
 
 exports.createGame = async (req, res) => {
   try {
-    const { name, description, price, category, image, os, players, language, minRequirements, recommendedRequirements } = req.body;
+    const { name, description, price, category, imageUrl, os, players, language, minRequirements, recommendedRequirements } = req.body;
     const companyId = req.user.companyId; // Se asume que `companyId` está en el token del usuario autenticado
 
     const newGame = await Game.create({
@@ -29,7 +32,7 @@ exports.createGame = async (req, res) => {
       description,
       price,
       category,
-      image,
+      imageUrl,
       os,
       players,
       language,
@@ -49,7 +52,7 @@ exports.createGame = async (req, res) => {
 exports.updateGame = async (req, res) => {
   try {
     const { gameId } = req.params;
-    const { name, description, price, category, image, os, players, language, minRequirements, recommendedRequirements } = req.body;
+    const { name, description, price, category, imageUrl, os, players, language, minRequirements, recommendedRequirements } = req.body;
     const companyId = req.user.companyId; // El ID de la compañía autenticada
 
     const game = await Game.findOne({ where: { id: gameId, companyId } });
@@ -61,7 +64,7 @@ exports.updateGame = async (req, res) => {
     game.description = description || game.description;
     game.price = price || game.price;
     game.category = category || game.category;
-    game.image = image || game.image;
+    game.imageUrl = imageUrl || game.imageUrl;
     game.os = os || game.os;
     game.players = players || game.players;
     game.language = language || game.language;
