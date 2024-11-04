@@ -11,7 +11,7 @@ exports.getCompanyGames = async (req, res) => {
       where: { companyId },
       include: [
         {
-          model: GameComment,
+          model: Comment,
           attributes: ['userId', 'content', 'rating']
         },
         {
