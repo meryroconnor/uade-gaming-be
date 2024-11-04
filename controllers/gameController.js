@@ -21,17 +21,22 @@ exports.getCompanyGames = async (req, res) => {
 
 exports.createGame = async (req, res) => {
   try {
-    const { name, description, price, category, imageUrl } = req.body;
-    const companyId = req.user.companyId;
+    const { name, description, price, category, image, os, players, language, minRequirements, recommendedRequirements } = req.body;
+    const companyId = req.user.companyId; // Se asume que `companyId` está en el token del usuario autenticado
 
     const newGame = await Game.create({
       name,
       description,
       price,
       category,
-      imageUrl,
+      image,
+      os,
+      players,
+      language,
+      minRequirements,
+      recommendedRequirements,
       companyId,
-      isPublished: false
+      isPublished: false // El juego se crea como no publicado por defecto
     });
 
     res.status(201).json(newGame);
@@ -44,19 +49,27 @@ exports.createGame = async (req, res) => {
 exports.updateGame = async (req, res) => {
   try {
     const { gameId } = req.params;
-    const { name, description, price, category, imageUrl } = req.body;
-    const companyId = req.user.companyId;
+    const { name, description, price, category, image, os, players, language, minRequirements, recommendedRequirements } = req.body;
+    const companyId = req.user.companyId; // El ID de la compañía autenticada
 
     const game = await Game.findOne({ where: { id: gameId, companyId } });
+
     if (!game) return res.status(404).json({ error: 'Game not found' });
 
+    // Actualizar los campos permitidos
     game.name = name || game.name;
     game.description = description || game.description;
     game.price = price || game.price;
     game.category = category || game.category;
-    game.imageUrl = imageUrl || game.imageUrl;
+    game.image = image || game.image;
+    game.os = os || game.os;
+    game.players = players || game.players;
+    game.language = language || game.language;
+    game.minRequirements = minRequirements || game.minRequirements;
+    game.recommendedRequirements = recommendedRequirements || game.recommendedRequirements;
 
     await game.save();
+
     res.status(200).json(game);
   } catch (error) {
     console.error('Error updating game:', error);
@@ -85,12 +98,13 @@ exports.publishGame = async (req, res) => {
 exports.unpublishGame = async (req, res) => {
   try {
     const { gameId } = req.params;
-    const companyId = req.user.companyId;
+    const companyId = req.user.companyId; // El ID de la compañía autenticada
 
     const game = await Game.findOne({ where: { id: gameId, companyId } });
+
     if (!game) return res.status(404).json({ error: 'Game not found' });
 
-    game.isPublished = false;
+    game.isPublished = false; // Cambia el estado de publicación
     await game.save();
 
     res.status(200).json({ message: 'Game unpublished successfully' });

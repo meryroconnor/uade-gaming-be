@@ -3,6 +3,10 @@ const sequelize = require('../config/database');
 const Company = require('./company');  // Relación con Company
 
 const Game = sequelize.define('Game', {
+  id: { 
+    type: DataTypes.STRING, 
+    primaryKey: true 
+  },
   name: {
     type: DataTypes.STRING,
     allowNull: false,
