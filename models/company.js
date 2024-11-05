@@ -1,8 +1,10 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const bcrypt = require('bcryptjs');
+const Game = require('./game');
 
 const Company = sequelize.define('Company', {
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
   name: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -12,26 +14,13 @@ const Company = sequelize.define('Company', {
     allowNull: true,  // El logo puede ser opcional
   },
   description: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: true,  // Descripción opcional
-  },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-  },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-}, {
-    hooks: {
-      beforeCreate: async (company) => {
-        const salt = await bcrypt.genSalt(10);
-        company.password = await bcrypt.hash(company.password, salt);
-      }
-    }
+  }
   
 });
+
+Company.hasMany(Game, { foreignKey: 'companyId' });
+Game.belongsTo(Company, { foreignKey: 'companyId' });
 
 module.exports = Company;

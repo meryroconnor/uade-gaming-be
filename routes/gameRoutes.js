@@ -10,6 +10,8 @@ router.post('/companies/games', authMiddleware, gameController.createGame);  // 
 router.put('/companies/games/:gameId', authMiddleware, gameController.updateGame);  // Modificar un juego
 router.post('/companies/games/:gameId/unpublish', authMiddleware, gameController.unpublishGame);  // Despublicar un juego
 router.post('/companies/games/:gameId/publish', authMiddleware, gameController.publishGame);  // Publicar un juego
-
+router.delete('/companies/games/:gameId', authMiddleware, gameController.deleteGame);
+router.get('/companies/games', authMiddleware, gameController.getCompanyGames);
+router.get('/games', gameController.listGames);
 
 module.exports = router;

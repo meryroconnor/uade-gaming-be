@@ -1,9 +1,13 @@
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
 const Profile = sequelize.define('Profile', {
-    image: { type: DataTypes.STRING, allowNull: true },
-    name: { type: DataTypes.STRING, allowNull: true },
-    lastName: { type: DataTypes.STRING, allowNull: true },
-    email: { type: DataTypes.STRING, allowNull: true },
-    dateOfBirth: { type: DataTypes.DATE, allowNull: true }
+  userId: { type: DataTypes.STRING, allowNull: false, unique: true },
+  name: { type: DataTypes.STRING, allowNull: false },
+  lastName: { type: DataTypes.STRING, allowNull: false },
+  image: { type: DataTypes.STRING },
+  dateOfBirth: { type: DataTypes.DATEONLY },
+  email: { type: DataTypes.STRING, allowNull: false, unique: true }
 });
-  
+
 module.exports = Profile;

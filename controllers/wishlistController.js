@@ -2,40 +2,54 @@ const Wishlist = require('../models/wishlist');
 const Game = require('../models/game');
 
 // Obtener la lista de deseos del usuario autenticado
-exports.getUserWishlist = async (req, res) => {
+exports.getWishlist = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.id; // ID del usuario autenticado
 
-    const wishlist = await Wishlist.findAll({
+    // Obtener los juegos en la wishlist del usuario
+    const wishlistItems = await Wishlist.findAll({
       where: { userId },
-      include: [{
+      include: {
         model: Game,
-        attributes: ['id', 'name', 'price', 'category', 'description', 'imageUrl', 'os', 'players', 'language', 'rating', 'minRequirements', 'recommendedRequirements']
-      }]
+        attributes: [
+          'id', 'companyId', 'name', 'category', 'description',
+          'price', 'recommendedRequirements', 'minRequirements', 'os', 'players', 'language', 'image', 'rating',
+          'isPublished'
+        ],
+      },
     });
 
-    res.status(200).json(wishlist.map(item => item.Game));
+    // Extraer solo la información del juego
+    const games = wishlistItems.map(item => item.Game);
+
+    res.status(200).json(games);
   } catch (error) {
-    console.error('Error fetching wishlist:', error);
+    console.error('Error retrieving wishlist:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
 exports.addGameToWishlist = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.id; // ID del usuario autenticado
     const { gameId } = req.params;
 
-    const game = await Game.findByPk(gameId);
-    if (!game) return res.status(404).json({ error: 'Game not found' });
+    // Verificar si el juego existe
+    const game = await Game.findOne({ where: { id: gameId } });
+    if (!game) {
+      return res.status(404).json({ error: 'Game not found' });
+    }
 
-    const [wishlistItem, created] = await Wishlist.findOrCreate({
-      where: { userId, gameId }
-    });
+    // Verificar si el juego ya está en la wishlist del usuario
+    const existingWishlistItem = await Wishlist.findOne({ where: { userId, gameId } });
+    if (existingWishlistItem) {
+      return res.status(400).json({ error: 'Game is already in wishlist' });
+    }
 
-    if (!created) return res.status(200).json({ message: 'Game already in wishlist' });
+    // Agregar el juego a la wishlist
+    await Wishlist.create({ userId, gameId });
 
-    res.status(201).json(game);
+    res.status(201).json({ message: 'Game added to wishlist successfully', game });
   } catch (error) {
     console.error('Error adding game to wishlist:', error);
     res.status(500).json({ error: 'Internal Server Error' });

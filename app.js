@@ -1,66 +1,70 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const userRoutes = require('./routes/userRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const commentRoutes = require('./routes/commentRoutes');
-const analyticsRoutes = require('./routes/analyticsRoutes');
-const companyRoutes = require('./routes/companyRoutes');
 const gameRoutes = require('./routes/gameRoutes');
+const companyRoutes = require('./routes/companyRoutes');
 const orderRoutes = require('./routes/orderRoutes');
-const paymentMethodRoutes = require('./routes/paymentMethodRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 const profileRoutes = require('./routes/profileRoutes');
+const userRoutes = require('./routes/userRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
-const authRoutes = require('./routes/authRoutes');
 const sequelize = require('./config/database');
-const authMiddleware = require('./middlewares/authMiddleware');
-const cors = require('cors');
-
 const app = express();
+
 app.use(bodyParser.json());
-app.use(cors());
 
-app.use(userRoutes);  // Agregar rutas de usuario
+// Rutas de análisis
+app.use(analyticsRoutes);
 
-// Rutas del carrito
+// Rutas de carrito
 app.use(cartRoutes);
 
 // Rutas de comentarios
 app.use(commentRoutes);
 
-// Rutas de analytics
-app.use(analyticsRoutes);
+// Rutas de juegos
+app.use(gameRoutes);
 
 // Rutas de compañías
 app.use(companyRoutes);
-
-// Rutas de juegos
-app.use(gameRoutes);
 
 // Rutas de órdenes
 app.use(orderRoutes);
 
 // Rutas de métodos de pago
-app.use(paymentMethodRoutes);
+app.use(paymentRoutes);
 
-// Rutas del perfil de usuario
+// Rutas de perfil
 app.use(profileRoutes);
 
-// Rutas de la wishlist
+// Rutas de usuarios
+app.use(userRoutes);
+
+// Rutas de wishlist
 app.use(wishlistRoutes);
 
-// Rutas de autenticación compartidas
-app.use(authRoutes);
-
-//Rutas de middleware
-app.use(authMiddleware);
+// Importa tus modelos (asegúrate de importar todos los modelos antes de la sincronización)
+require('./models/user');
+require('./models/game');
+require('./models/wishlist');
+require('./models/cartItem');
+require('./models/comment');
+require('./models/company');
+require('./models/companyAnalytics');
+require('./models/gameAnalytics');
+require('./models/order');
+require('./models/orderItem');
+require('./models/paymentMethod');
+require('./models/profile');
 
 // Conectar a la base de datos
-sequelize.sync()
-    .then(() => console.log('Database synced'))
-    .catch(err => console.log('Error syncing database:', err));
+sequelize.sync({force: false})
+  .then(() => console.log('Database synced'))
+  .catch(err => console.log('Error syncing database:', err));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
-

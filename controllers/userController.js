@@ -7,17 +7,24 @@ exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Verificar si el usuario existe
     const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) return res.status(401).json({ error: 'Invalid credentials' });
+    // Comparar la contraseña proporcionada con la almacenada
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
-    const token = jwt.sign({ id: user.id }, 'your_jwt_secret', { expiresIn: '1h' });
+    // Generar token de acceso
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     res.status(200).json({ token });
   } catch (error) {
-    console.error('Error logging in:', error);
+    console.error('Error logging in user:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -28,13 +35,22 @@ exports.requestPasswordReset = async (req, res) => {
   try {
     const { email } = req.body;
 
+    // Buscar al usuario por su correo electrónico
     const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
-    // Lógica para enviar correo de restablecimiento (simulación)
-    await sendPasswordResetEmail(email);
+    // Generar token de restablecimiento
+    const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '15m' });
 
-    res.status(200).json({ message: 'Password reset email sent' });
+    // Simular el envío del enlace de restablecimiento
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+    console.log(`Simulated password reset link (not actually sent): ${resetLink}`);
+
+    // Responder con un mensaje de éxito simulado
+    res.status(200).json({ message: 'Password reset email "sent" (simulated)', resetLink });
   } catch (error) {
     console.error('Error requesting password reset:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -43,16 +59,33 @@ exports.requestPasswordReset = async (req, res) => {
 
 exports.registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, lastName, email, password, dateOfBirth, userType } = req.body;
 
+    // Validar campos obligatorios
+    if (!name || !lastName || !email || !password || !userType) {
+      return res.status(400).json({ error: 'Invalid input' });
+    }
+
+    // Verificar si el correo ya está registrado
     const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) return res.status(400).json({ error: 'Email already exists' });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
 
+    // Encriptar la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = await User.create({ name, email, password: hashedPassword });
+    // Crear el usuario
+    const newUser = await User.create({
+      name,
+      lastName,
+      email,
+      password: hashedPassword,
+      dateOfBirth,
+      userType,  // 'customer' o 'company'
+    });
 
-    res.status(201).json(newUser);
+    res.status(201).json({ message: 'User registered successfully', user: newUser });
   } catch (error) {
     console.error('Error registering user:', error);
     res.status(500).json({ error: 'Internal Server Error' });

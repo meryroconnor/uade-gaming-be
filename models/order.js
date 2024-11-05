@@ -1,29 +1,24 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const User = require('./user');
+const OrderItem = require('./orderItem');
+const Game = require('./game');
 
 const Order = sequelize.define('Order', {
-  totalPrice: {
-    type: DataTypes.FLOAT,
-    allowNull: false,
-  },
+  id: { type: DataTypes.STRING, primaryKey: true },
+  userId: { type: DataTypes.STRING, allowNull: false },
+  totalPrice: { type: DataTypes.DECIMAL },
   status: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    defaultValue: 'pending',
-  },
-  userId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: User,
-      key: 'id'
-    },
+    type: DataTypes.ENUM('pending', 'processing', 'completed', 'cancelled'),
+    defaultValue: 'pending'
   },
   createdAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   updatedAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
-}, {
-  timestamps: true,
 });
+
+Order.hasMany(OrderItem, { foreignKey: 'orderId' });
+OrderItem.belongsTo(Order, { foreignKey: 'orderId' });
+Order.belongsToMany(Game, { through: 'OrderItems', foreignKey: 'orderId' });
+Game.belongsToMany(Order, { through: 'OrderItems', foreignKey: 'gameId' });
 
 module.exports = Order;

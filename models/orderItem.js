@@ -32,4 +32,7 @@ const OrderItem = sequelize.define('OrderItem', {
   timestamps: false,
 });
 
+OrderItem.belongsTo(Game, { foreignKey: 'gameId' });
+Game.hasMany(OrderItem, { foreignKey: 'gameId' });
+
 module.exports = OrderItem;

@@ -1,85 +1,63 @@
-const Company = require('../models/company');
+const CompanyAnalytics = require('../models/companyAnalytics');
+const GameAnalytics = require('../models/gameAnalytics');
 const Game = require('../models/game');
-const Order = require('../models/order');
 const { Op } = require('sequelize');
 
-// Obtener analítica de los juegos de la compañía
 exports.getCompanyAnalytics = async (req, res) => {
   try {
-    const companyId = req.user.id;  // Obtener el ID de la compañía autenticada
+    const companyId = req.user.companyId; // ID de la compañía autenticada
     const { category, period, page = 1, pageSize = 5 } = req.query;
 
-    // Verificar que la compañía existe
-    const company = await Company.findByPk(companyId);
-    if (!company) {
+    // Obtener los datos de análisis de la compañía
+    const companyAnalytics = await CompanyAnalytics.findOne({ where: { companyId } });
+    if (!companyAnalytics) {
       return res.status(404).json({ error: 'Company not found' });
     }
 
-    // Filtros de juegos de la compañía
-    const gameFilters = { companyId };
+    // Configuración de filtros para análisis de juegos
+    const filters = { companyId };
     if (category) {
-      gameFilters.category = category;
+      filters.category = category;
+    }
+    if (period) {
+      filters.salesPeriod = { [Op.startsWith]: period }; // Filtrar por periodo (YYYY-MM)
     }
 
-    // Obtener juegos de la compañía con el filtro de categoría
-    const games = await Game.findAll({
-      where: gameFilters,
-      include: [{
-        model: Order,
-        where: period ? {
-          createdAt: {
-            [Op.between]: [
-              new Date(`${period}-01`),  // Inicio del período
-              new Date(`${period}-31`)   // Fin del período
-            ]
-          }
-        } : {},
-        required: false,  // Incluir juegos aunque no tengan órdenes
-      }],
-      offset: (page - 1) * pageSize,
+    // Paginación de datos de análisis de juegos
+    const offset = (page - 1) * pageSize;
+
+    // Obtener análisis de cada juego con los filtros y la paginación aplicada
+    const gameAnalytics = await GameAnalytics.findAll({
+      where: filters,
+      include: {
+        model: Game,
+        attributes: ['id', 'name']
+      },
+      offset,
       limit: parseInt(pageSize),
+      attributes: [
+        'gameId', 'revenue', 'wishlistAdditions', 'averageRating', 'sales', 'views'
+      ]
     });
 
-    // Calcular las métricas para cada juego y para la compañía en general
-    let totalSales = 0;
-    let totalOrders = 0;
-    let customerSatisfaction = 0;
-    const gameAnalytics = games.map(game => {
-      const sales = game.Orders.length;
-      const revenue = game.Orders.reduce((acc, order) => acc + order.totalPrice, 0);
-      const averageRating = game.rating || 0;  // Supuesto: la calificación promedio del juego está en `game.rating`
-      const wishlistAdditions = game.wishlistAdditions || 0;  // Supuesto: cantidad de añadidos a la wishlist
-      const views = game.views || 0;  // Supuesto: cantidad de visualizaciones del juego
-
-      // Agregar los datos de este juego a las métricas generales de la compañía
-      totalSales += revenue;
-      totalOrders += sales;
-      customerSatisfaction += averageRating;
-
-      return {
-        gameId: game.id,
-        gameName: game.name,
-        revenue,
-        wishlistAdditions,
-        averageRating,
-        sales,
-        views,
-      };
-    });
-
-    // Calcular la satisfacción promedio del cliente
-    customerSatisfaction = games.length ? (customerSatisfaction / games.length) : 0;
-
-    // Responder con los datos de `CompanyAnalytics`
-    res.json({
-      companyId,
-      totalSales,
-      totalOrders,
-      customerSatisfaction,
-      gameAnalytics
+    // Estructurar la respuesta con los datos de la compañía y de los juegos
+    res.status(200).json({
+      companyId: companyAnalytics.companyId,
+      totalSales: companyAnalytics.totalSales,
+      totalOrders: companyAnalytics.totalOrders,
+      customerSatisfaction: companyAnalytics.customerSatisfaction,
+      gameAnalytics: gameAnalytics.map(ga => ({
+        gameId: ga.gameId,
+        gameName: ga.Game.name,
+        revenue: ga.revenue,
+        wishlistAdditions: ga.wishlistAdditions,
+        averageRating: ga.averageRating,
+        sales: ga.sales,
+        views: ga.views
+      }))
     });
   } catch (error) {
     console.error('Error fetching analytics:', error);
-    res.status(500).json({ error: 'Error fetching analytics' });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };

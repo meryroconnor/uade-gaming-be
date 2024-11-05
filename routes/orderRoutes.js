@@ -5,6 +5,6 @@ const router = express.Router();
 
 // Rutas para órdenes
 router.get('/orders', authMiddleware, orderController.getUserOrders);  // Obtener todas las órdenes del usuario
-router.get('/orders/:orderId', authMiddleware, orderController.getOrderById);  // Obtener detalles de una orden específica
+router.get('/orders/:orderId', authMiddleware, orderController.getOrderDetails);
 
 module.exports = router;

@@ -1,17 +1,22 @@
 const User = require('../models/user');
+const Profile = require('../models/profile');
 
 // Obtener detalles del perfil del usuario autenticado
 exports.getUserProfile = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.id; // ID del usuario autenticado
 
-    const user = await User.findByPk(userId, {
-      attributes: ['name', 'lastName', 'email', 'dateOfBirth', 'image']
+    // Buscar el perfil del usuario autenticado
+    const profile = await Profile.findOne({
+      where: { userId },
+      attributes: ['image', 'lastName', 'name', 'dateOfBirth', 'email']
     });
 
-    if (!user) return res.status(404).json({ error: 'Profile not found' });
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
 
-    res.status(200).json(user);
+    res.status(200).json(profile);
   } catch (error) {
     console.error('Error fetching profile:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -20,20 +25,26 @@ exports.getUserProfile = async (req, res) => {
 
 exports.updateUserProfile = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { name, lastName, email, dateOfBirth, image } = req.body;
+    const userId = req.user.id; // ID del usuario autenticado
+    const { name, lastName, image, dateOfBirth, email } = req.body;
 
-    const user = await User.findByPk(userId);
-    if (!user) return res.status(404).json({ error: 'Profile not found' });
+    // Buscar el perfil del usuario autenticado
+    const profile = await Profile.findOne({ where: { userId } });
 
-    user.name = name || user.name;
-    user.lastName = lastName || user.lastName;
-    user.email = email || user.email;
-    user.dateOfBirth = dateOfBirth || user.dateOfBirth;
-    user.image = image || user.image;
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
 
-    await user.save();
-    res.status(200).json(user);
+    // Actualizar los campos del perfil
+    profile.name = name || profile.name;
+    profile.lastName = lastName || profile.lastName;
+    profile.image = image || profile.image;
+    profile.dateOfBirth = dateOfBirth || profile.dateOfBirth;
+    profile.email = email || profile.email;
+
+    await profile.save();
+
+    res.status(200).json({ message: 'Profile updated successfully', profile });
   } catch (error) {
     console.error('Error updating profile:', error);
     res.status(500).json({ error: 'Internal Server Error' });

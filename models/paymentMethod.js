@@ -1,24 +1,17 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const User = require('./user');
 
-const PaymentMethod = sequelize.define('PaymentMethod', {
-  type: {
-    type: DataTypes.ENUM('credit', 'debit'),  // e.g., 'credit_card', 'paypal'
-    allowNull: false,
-  },
+const PaymentMethods = sequelize.define('PaymentMethods', {
+  userId: { type: DataTypes.STRING, allowNull: false },
+  type: { type: DataTypes.ENUM('credit', 'debit'), allowNull: false },
   cardDetails: {
-    type: DataTypes.JSONB,
-    allowNull: false,
-  },
-  userId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: User,
-      key: 'id',
-    },
-  },
+    type: DataTypes.JSON,
+    validate: {
+      isCreditCard: {
+        args: true,
+        msg: 'Invalid credit card number'
+      }
+    }
+  }
 });
-
 module.exports = PaymentMethod;
