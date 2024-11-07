@@ -18,10 +18,10 @@ User.beforeCreate(async (user) => {
   user.password = await bcrypt.hash(user.password, 10); // Encriptar contraseña antes de guardar
 });
 
-module.exports = User;
-
 User.hasMany(require('./wishlist'), { foreignKey: 'userId' });
 Wishlist.belongsTo(User, { foreignKey: 'userId' });
 
 User.hasMany(Order, { foreignKey: 'userId' });
 Order.belongsTo(User, { foreignKey: 'userId' });
+
+module.exports = User;
